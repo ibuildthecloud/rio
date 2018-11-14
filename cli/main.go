@@ -39,6 +39,7 @@ import (
 	"github.com/rancher/rio/cli/pkg/clicontext"
 	"github.com/rancher/rio/cli/pkg/clientcfg"
 	"github.com/rancher/rio/cli/pkg/waiter"
+	_ "github.com/rancher/rio/init"
 	_ "github.com/rancher/rio/pkg/kubectl"
 	"github.com/rancher/rio/version"
 	"github.com/sirupsen/logrus"

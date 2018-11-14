@@ -25,23 +25,21 @@ var trigger = []changeset.Key{
 	},
 }
 
-func Register(ctx context.Context, rContext *types.Context) error {
+func Register(ctx context.Context, rContext *types.Context) {
 	s := &istioDeployController{
-		virtualServiceLister: rContext.Networking.VirtualServices("").Controller().Lister(),
-		serviceLister:        rContext.Core.Services("").Controller().Lister(),
-		namespaceLister:      rContext.Core.Namespaces("").Controller().Lister(),
+		virtualServiceLister: rContext.Networking.VirtualService.Cache(),
+		serviceLister:        rContext.Core.Service.Cache(),
+		namespaceLister:      rContext.Core.Namespace.Cache(),
 	}
 
-	rContext.Networking.VirtualServices("").AddHandler(ctx, "istio-deploy", s.sync)
+	rContext.Networking.VirtualService.Interface().AddHandler(ctx, "istio-deploy", s.sync)
 	changeset.Watch(ctx, "istio-deploy",
 		resolve,
-		rContext.Networking.VirtualServices("").Controller().Enqueue,
-		rContext.Networking.VirtualServices("").Controller(),
-		rContext.Core.Services("").Controller(),
-		rContext.Core.Namespaces("").Controller())
-	rContext.Networking.VirtualServices("").Controller().Enqueue("", all)
-
-	return nil
+		rContext.Networking.VirtualService,
+		rContext.Networking.VirtualService,
+		rContext.Core.Service,
+		rContext.Core.Namespace)
+	rContext.Networking.VirtualService.Enqueue("", all)
 }
 
 func resolve(namespace, name string, obj runtime.Object) ([]changeset.Key, error) {
@@ -62,9 +60,9 @@ func resolve(namespace, name string, obj runtime.Object) ([]changeset.Key, error
 }
 
 type istioDeployController struct {
-	virtualServiceLister v1alpha3.VirtualServiceLister
-	serviceLister        v12.ServiceLister
-	namespaceLister      v12.NamespaceLister
+	virtualServiceLister v1alpha3.VirtualServiceClientCache
+	serviceLister        v12.ServiceClientCache
+	namespaceLister      v12.NamespaceClientCache
 }
 
 func (i *istioDeployController) sync(key string, obj *v1alpha3.VirtualService) (runtime.Object, error) {
